@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IVF Success Calculator</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>IVF Success Calculator</h1>
+        <form id="ivf-form">
+            <label for="using_own_eggs">Using Own Eggs:</label>
+            <select id="using_own_eggs" name="using_own_eggs" required>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
+
+            <label for="attempted_ivf_previously">Attempted IVF Previously:</label>
+            <select id="attempted_ivf_previously" name="attempted_ivf_previously" required>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
+
+            <label for="is_reason_for_infertility_known">Reason for Infertility Known:</label>
+            <select id="is_reason_for_infertility_known" name="is_reason_for_infertility_known" required>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
+
+            <label for="tubal_factor">Tubal Factor:</label>
+            <select id="tubal_factor" name="tubal_factor">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
+
+            <label for="male_factor_infertility">Male Factor Infertility:</label>
+            <select id="male_factor_infertility" name="male_factor_infertility">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
+
+            <label for="endometriosis">Endometriosis:</label>
+            <select id="endometriosis" name="endometriosis">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
+
+            <label for="ovulatory_disorder">Ovulatory Disorder:</label>
+            <select id="ovulatory_disorder" name="ovulatory_disorder">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
+
+            <label for="diminished_ovarian_reserve">Diminished Ovarian Reserve:</label>
+            <select id="diminished_ovarian_reserve" name="diminished_ovarian_reserve">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
+
+            <label for="uterine_factor">Uterine Factor:</label>
+            <select id="uterine_factor" name="uterine_factor">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
+
+            <label for="other_reason">Other Reason:</label>
+            <select id="other_reason" name="other_reason">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
+
+            <label for="unexplained_infertility">Unexplained Infertility:</label>
+            <select id="unexplained_infertility" name="unexplained_infertility">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
+
+            <label for="prior_pregnancies">Prior Pregnancies:</label>
+            <input type="number" id="prior_pregnancies" name="prior_pregnancies" min="0" value="0" required>
+
+            <label for="prior_live_births">Prior Live Births:</label>
+            <input type="number" id="prior_live_births" name="prior_live_births" min="0" value="0" required>
+
+            <label for="age">Age:</label>
+            <input type="number" id="age" name="age" min="20" max="50" value="40" required>
+
+            <label for="height_feet">Height (Feet):</label>
+            <input type="number" id="height_feet" name="height_feet" min="4" max="6" value="5" required>
+
+            <label for="height_inches">Height (Inches):</label>
+            <input type="number" id="height_inches" name="height_inches" min="0" value="4" required>
+
+            <label for="weight_lbs">Weight (Pounds):</label>
+            <input type="number" id="weight_lbs" name="weight_lbs" min="0" value="150" required>
+
+            <button type="submit">Calculate</button>
+        </form>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('ivf-form');
+        const resultDiv = document.getElementById('result');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Convert string values to boolean
+            data.using_own_eggs = data.using_own_eggs === 'true';
+            data.attempted_ivf_previously = data.attempted_ivf_previously === 'true';
+            data.is_reason_for_infertility_known = data.is_reason_for_infertility_known === 'true';
+            data.tubal_factor = data.tubal_factor === 'true';
+            data.male_factor_infertility = data.male_factor_infertility === 'true';
+            data.endometriosis = data.endometriosis === 'true';
+            data.ovulatory_disorder = data.ovulatory_disorder === 'true';
+            data.diminished_ovarian_reserve = data.diminished_ovarian_reserve === 'true';
+            data.uterine_factor = data.uterine_factor === 'true';
+            data.other_reason = data.other_reason === 'true';
+            data.unexplained_infertility = data.unexplained_infertility === 'true';
+
+            try {
+                const response = await fetch('/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    resultDiv.textContent = `Success Chance: ${result.success_chance_percentage.toFixed(2)}%`;
+                } else {
+                    resultDiv.textContent = `Error: ${result.error}`;
+                }
+            } catch (error) {
+                resultDiv.textContent = 'Error connecting to the server.';
+            }
+        });
+    </script>
+</body>
+</html>
