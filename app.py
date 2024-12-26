@@ -1,3 +1,7 @@
+import logging
+import os
+from enum import Enum
+
 from flask import Flask, request, jsonify, Response, send_from_directory
 import csv
 import math
@@ -8,8 +12,10 @@ from calculation_helpers import (get_age_value, get_bmi_value, get_boolean_value
                                  get_prior_pregnancy_value)
 from parameter_model import Formula, IVFData
 
-app = Flask(__name__)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+app = Flask(__name__)
 
 FORMULAS = []
 BOOLEAN_VALUE_FACTOR_NAMES = ['tubal_factor',
@@ -20,38 +26,48 @@ BOOLEAN_VALUE_FACTOR_NAMES = ['tubal_factor',
                               'uterine_factor',
                               'other_reason',
                               'unexplained_infertility']
+CSV_FILE_PATH = os.getenv('CSV_FILE_PATH', 'ivf_success_formulas.csv')
 
 
-with open('ivf_success_formulas.csv') as csvfile:
+class ParamOption(str, Enum):
+    TRUE = "TRUE"
+    FALSE = "FALSE"
+    NA = "N/A"
+
+
+if not os.path.exists(CSV_FILE_PATH):
+    logger.error(f"CSV file not found: {CSV_FILE_PATH}")
+    exit()
+
+with open('ivf_success_formulas.csv', mode='r') as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
         try:
             FORMULAS.append(Formula(**row))
         except ValidationError as e:
-            print(f"Error validating row {row}: {e}")
+            logger.error(f"Error validating row {row}: {e}")
+
+
+def string_to_bool(value: str) -> bool:
+    if value.upper() == ParamOption.TRUE:
+        return True
+    return False
+
+
+def match_param(param: bool, formula_param: str) -> bool:
+    return param == string_to_bool(formula_param) or formula_param == ParamOption.NA
 
 
 def select_formula(formulas: list[Formula], data: IVFData) -> Formula | None:
-
-    def string_to_bool(value: str) -> bool | None:
-        if value.upper() == "TRUE":
-            return True
-        elif value.upper() == "FALSE":
-            return False
-
-    def match_param(param: bool, formula_param: str) -> bool:
-        return param == string_to_bool(formula_param) or formula_param == "N/A"
-
     for formula in formulas:
         if match_param(data.using_own_eggs, formula.param_using_own_eggs) \
-            and match_param(data.attempted_ivf_previously, formula.param_attempted_ivf_previously) \
+                and match_param(data.attempted_ivf_previously, formula.param_attempted_ivf_previously) \
                 and match_param(data.is_reason_for_infertility_known, formula.param_is_reason_for_infertility_known):
             return formula
     return None
 
 
-def calculate(data: IVFData) -> Response:
-
+def calculate(data: IVFData) -> tuple[Response, int]:
     formula: Formula | None = select_formula(FORMULAS, data)
 
     if formula is None:
@@ -67,14 +83,17 @@ def calculate(data: IVFData) -> Response:
     exp_score = math.exp(score)
     success_chance_percentage: float = exp_score / (1 + exp_score)
 
-    return jsonify({"success_chance_percentage": success_chance_percentage * 100})
+    return jsonify({"success_chance_percentage": success_chance_percentage * 100}), 200
 
 
 @app.route('/calculate', methods=['POST'])
 def calculate_success():
     data = request.get_json()
 
-    ivf_data = IVFData(**data)
+    try:
+        ivf_data = IVFData(**data)
+    except ValidationError as e:
+        return jsonify({"error": e.errors()}), 400
 
     return calculate(ivf_data)
 

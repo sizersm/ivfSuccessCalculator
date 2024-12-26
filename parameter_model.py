@@ -3,20 +3,20 @@ from pydantic import BaseModel, Field
 
 class IVFData(BaseModel):
     using_own_eggs: bool
-    attempted_ivf_previously: bool | None = Field(default=None)
+    attempted_ivf_previously: bool
     is_reason_for_infertility_known: bool
     age: int
     height_feet: int
     height_inches: int
     weight_lbs: int
-    tubal_factor: bool | None  = Field(default=False)
-    male_factor_infertility: bool | None  = Field(default=False)
-    endometriosis: bool | None  = Field(default=False)
-    ovulatory_disorder: bool | None  = Field(default=False)
-    diminished_ovarian_reserve: bool | None  = Field(default=False)
-    uterine_factor: bool | None  = Field(default=False)
-    other_reason: bool | None  = Field(default=False)
-    unexplained_infertility: bool | None  = Field(default=False)
+    tubal_factor: bool | None = Field(default=False)
+    male_factor_infertility: bool | None = Field(default=False)
+    endometriosis: bool | None = Field(default=False)
+    ovulatory_disorder: bool | None = Field(default=False)
+    diminished_ovarian_reserve: bool | None = Field(default=False)
+    uterine_factor: bool | None = Field(default=False)
+    other_reason: bool | None = Field(default=False)
+    unexplained_infertility: bool | None = Field(default=False)
     prior_pregnancies: int = Field(default=0)
     prior_live_births: int = Field(default=0)
 
@@ -24,7 +24,7 @@ class IVFData(BaseModel):
     def bmi(self) -> float:
         total_inches = self.height_feet * 12 + self.height_inches
         return (self.weight_lbs / (total_inches ** 2)) * 703
-    
+
 
 class Formula(BaseModel):
     param_using_own_eggs: str

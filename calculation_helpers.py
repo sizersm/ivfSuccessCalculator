@@ -26,4 +26,5 @@ def get_bmi_value(data: IVFData, formula: Formula) -> float:
 
 
 def get_boolean_value(data: IVFData, formula: Formula, factor_name: str) -> float:
-    return getattr(formula, f'formula_{factor_name}_true_value') if getattr(data, factor_name) else getattr(formula, f'formula_{factor_name}_false_value')
+    return getattr(formula, f'formula_{factor_name}_true_value') if getattr(data, factor_name) \
+        else getattr(formula, f'formula_{factor_name}_false_value')

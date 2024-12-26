@@ -129,9 +129,9 @@ def app_context():
     )
 ])
 def test_calculate(ivf_data, expected_status, expected_success_chance, app_context):
-    response = calculate(ivf_data)
+    response, status_code = calculate(ivf_data)
 
-    assert response.status_code == expected_status
+    assert status_code == expected_status
 
     json_response = response.get_json()
 
